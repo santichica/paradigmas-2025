@@ -11,8 +11,6 @@
 
 The basic types are structured in a hierarchy based on **set inclusion**. This implies that any operation valid for a parent type is also valid for a subtype. For example, all `lists` are a type of `tuple`, and all `tuples` are a type of `record`.
 
-Here is another way to format the code. You can copy this and try pasting it directly into your markdown file. If the markdown preview doesn't show the graph, it might be an issue with the markdown viewer's support for Mermaid.
-
 
 ![figure2-16](../imagenes/figure2-16.PNG)
 
