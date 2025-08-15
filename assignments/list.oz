@@ -13,14 +13,23 @@ fun {IsOdd N}
     if (N mod 2) \= 0 then N else 0 end
 end
 
+fun {SumList L}
+    case L of nil then 0
+    [] H|T then H + {SumList T}
+    end
+end
+
+fun {ProductList L}
+    case L of nil then 1
+    [] H|T then H * {ProductList T}
+    end
+end
 
 fun {OddSumEvenProduct L}
-    local List_isEven List_isOdd product sum R in
+    local List_isEven List_isOdd in
         List_isEven = {List.map L IsEven}
         List_isOdd = {List.map L IsOdd}
-        product = {List.product List_isEven}
-        sum = {List.sum List_isOdd}
-        R = result(product1: sum1:{List.sum List_isOdd})
+        result(product1:{ProductList List_isEven} sum1:{SumList List_isOdd})
     end     
 end
 local
@@ -28,10 +37,4 @@ local
     L2 = {OddSumEvenProduct L}
 in
     {Browse L2}
-end
-
-local L L1 in
-    L = [1 2 3 4 5 6]
-    L1 = {List.sum L}
-    {Browse L1}
 end
