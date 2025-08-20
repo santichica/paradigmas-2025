@@ -1,11 +1,3 @@
-%% AddPolynomials
-%% Input: Two lists of integers representing polynomials
-%% Output: A list of integers representing the sum of the polynomials
-%% Examples
-%% {AddPolynomials [1 ~2] [4 3 2 1]} = [4 3 3 ~1]
-%% {AddPolynomials [3 0 0 4 1 ~5] [0 2 ~1 1 4 10]} = [3 2 ~1 5 5 5]
-
-
 %% PadWithZeros
 %% Input: A list of integers and a number N
 %% Output: A list of integers with N zeros appended to the left
@@ -24,6 +16,13 @@ fun {AddList L1 L2}
     else nil end
 end
 
+
+%% AddPolynomials
+%% Input: Two lists of integers representing polynomials
+%% Output: A list of integers representing the sum of the polynomials
+%% Examples
+%% {AddPolynomials [1 ~2] [4 3 2 1]} = [4 3 3 ~1]
+%% {AddPolynomials [3 0 0 4 1 ~5] [0 2 ~1 1 4 10]} = [3 2 ~1 5 5 5]
 fun {AddPolynomials P1 P2}
     % 1. If P1 is longer than P2, pad P2 with zeros and use AddList
     % 2. If P2 is longer than P1, pad P1 with zeros and use AddList
