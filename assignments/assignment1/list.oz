@@ -32,6 +32,7 @@ fun {OddSumEvenProduct L}
         result(product1:{ProductList List_isEven} sum1:{SumList List_isOdd})
     end     
 end
+
 local
     L = [1 2 3 4 5 6]
     L2 = {OddSumEvenProduct L}
