@@ -36,7 +36,7 @@ fun {Integral F A B N}
     end
 end
 
-%Test case
+% Test case
 local A B N
 in
     A = 1.0
