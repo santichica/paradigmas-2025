@@ -32,7 +32,20 @@ fun {RecordRelation R1 R2}
 end
 
 
-% Test case
-R1 = record1(a:1)
-R2 = record1(a:1 2:0)
+% Test cases for each of the four possible outputs
+% equal
+R1 = record1(a:1 b:2)
+R2 = record1(a:1 b:2)
 {Browse {RecordRelation R1 R2}}
+% equivalent
+R3 = record1(a:1 b:2)
+R4 = record1(a:1 b:3)
+{Browse {RecordRelation R3 R4}}
+% different
+R5 = record1(a:1 c:2)
+R6 = record2(b:1 d:2)
+{Browse {RecordRelation R5 R6}}
+% subsimilar
+R7 = record1(a:1)
+R8 = record1(a:1 2:0)
+{Browse {RecordRelation R7 R8}}

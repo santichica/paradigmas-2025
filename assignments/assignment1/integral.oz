@@ -1,15 +1,6 @@
 %% integral
-%% Input: A function F, real numbers A and B with A < B, and an even integer N > 0
+%% Input: A function F, real numbers A and B with A < B, and an even integer N > 0. The N should be an integer in float format (e.g., 10.0).
 %% Output: A real number approximating the definite integral of F over [A, B] using Simpson ’s rule
-
-% Function that will be injected as parameter to the Integral function
-declare
-fun {Sqr A}
-    local R = A*A
-    in
-        R
-    end
-end
 
 %% Main function
 declare
@@ -37,6 +28,15 @@ fun {Integral F A B N}
 end
 
 % Test case
+% Function that will be injected as parameter to the Integral function
+declare
+fun {Sqr A}
+    local R = A*A
+    in
+        R
+    end
+end
+
 local A B N
 in
     A = 1.0
@@ -44,4 +44,3 @@ in
     N = 30.0
     {Browse {Integral Sqr A B N}}
 end
-

@@ -44,9 +44,12 @@ end
 
 
 local
-%test case of the current function
-    P1 = [~2 2 0]
-    P2 = [2 1 0 0 0]
+% Test case of the current function
+    P1 = [1 ~2]
+    P2 = [4 3 2 1]
+    P3 = [3 0 0 4 1 ~5]
+    P4 = [0 2 ~1 1 4 10]
 in
     {Browse {AddPolynomials P1 P2}}
+    {Browse {AddPolynomials P3 P4}}
 end
