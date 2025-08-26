@@ -30,11 +30,10 @@ fun {OddSumEvenProduct L}
         case L of nil then nil
         else
         {List.partition L IsEven List_isEven List_isOdd}
-        result(product:{ProductList List_isEven} sum:{SumList List_isOdd})
+        result({ProductList List_isEven} {SumList List_isOdd})
         end
     end     
 end
-
 
 % Test cases
 local
