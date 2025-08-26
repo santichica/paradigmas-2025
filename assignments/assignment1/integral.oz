@@ -1,5 +1,5 @@
 %% integral
-%% Input: A function F, real numbers A and B with A < B, and an even integer N > 0. The N should be an integer in float format (e.g., 10.0).
+%% Input: A function F, real numbers A and B with A < B, and an even integer N > 0.
 %% Output: A real number approximating the definite integral of F over [A, B] using Simpson ’s rule
 
 %% Main function
