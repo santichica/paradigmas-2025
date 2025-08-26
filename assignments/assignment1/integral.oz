@@ -6,13 +6,13 @@
 declare
 fun {Integral F A B N}
     local
-        H = (B-A)/N
+        N_float = {Int.toFloat N}
+        H = (B-A)/N_float
         
         C = {NewCell 0.0}
-        Iterable = {Float.toInt N}
-        for I in 0..Iterable do
+        for I in 0..N do
 
-            if {Bool.'or' I==0 I==Iterable} then
+            if {Bool.'or' I==0 I==N} then
                 C:= @C + {F (A+H*{Int.toFloat I})}
             elseif (I mod 2) \= 0 then
                 C:= @C + 4.0*{F (A+H*{Int.toFloat I})}
@@ -41,6 +41,6 @@ local A B N
 in
     A = 1.0
     B = 12.0
-    N = 30.0
+    N = 30
     {Browse {Integral Sqr A B N}}
 end
