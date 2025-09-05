@@ -13,7 +13,6 @@ end
 
 class Num from Expression
   attr n : 0
-  % num_to_string can be extended as needed. It was built from 0 to 9 for explanatory purposes.
   meth init(Val)
     n := Val
   end
@@ -24,6 +23,7 @@ class Num from Expression
     R = @n
   end
   meth toString
+    % number_dict can be extended as needed. It was built from 0 to 9 for explanatory purposes.
     local Map PrintStatement in
         Map = number_dict(0:"zero" 1:"one" 2:"two" 3:"three" 4:"four" 5:"five" 6:"six" 7:"seven" 8:"eight" 9:"nine")
         {CondSelect Map @n "number out of range" PrintStatement}
