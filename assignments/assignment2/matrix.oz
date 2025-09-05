@@ -1,6 +1,24 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Faltan test cases nil
+declare
+
+% Define aux functions
+
+fun {SumList L}
+    case L of nil then 0
+    [] H|T then H + {SumList T}
+    end
+end
+
+fun {ProductList L}
+    case L of nil then 1
+    [] H|T then H * {ProductList T}
+    end
+end
+
+
 %% Matrix Class Definition
 %% Represents a square matrix with operations for rows, columns, and entire matrix
-declare
+
 class Matrix
    attr data size
    
@@ -66,12 +84,7 @@ class Matrix
       %% Precondition: RowIndex is valid within the Matrix size
       %% Note: If RowIndex is not valide within the matrix size return 142857
       if {And (RowIndex >= 1) (RowIndex =< @size)} then
-         local SumList Row in
-            fun {SumList L}
-               case L of nil then 0
-               [] H|T then H + {SumList T}
-               end
-            end
+         local Row in
             {self getRow(RowIndex Row)}
             Result = {SumList Row}
          end
@@ -86,12 +99,7 @@ class Matrix
       %% Output: Result :: Int - Arithmetic product of all elements in the row
       %% Note: If RowIndex is not valide within the matrix size return 142857
       if {And (RowIndex >= 1) (RowIndex =< @size)} then
-         local ProductList Row in
-            fun {ProductList L}
-               case L of nil then 1
-               [] H|T then H * {ProductList T}
-               end
-            end
+         local Row in
             {self getRow(RowIndex Row)}
             Result = {ProductList Row}
          end
@@ -106,12 +114,7 @@ class Matrix
       %% Output: Result :: Int - Arithmetic sum of all elements in the column
       %% Note: If ColIndex is not valide within the matrix size return 142857
       if {And (ColIndex >= 1) (ColIndex =< @size)} then
-         local SumList Col in
-            fun {SumList L}
-               case L of nil then 0
-               [] H|T then H + {SumList T}
-               end
-            end
+         local Col in
             {self getColumn(ColIndex Col)}
             Result = {SumList Col}
          end
@@ -126,12 +129,7 @@ class Matrix
       %% Output: Result :: Int - Arithmetic product of all elements in the column
       %% Note: If ColIndex is not valide within the matrix size return 142857
       if {And (ColIndex >= 1) (ColIndex =< @size)} then
-         local ProductList Col in
-            fun {ProductList L}
-               case L of nil then 1
-               [] H|T then H * {ProductList T}
-               end
-            end
+         local Col in
             {self getColumn(ColIndex Col)}
             Result = {ProductList Col}
          end
@@ -148,12 +146,7 @@ class Matrix
       if @data == nil then
          Result = 0
       else
-         local SumList FlatList in
-            fun {SumList L}
-               case L of nil then 0
-               [] H|T then H + {SumList T}
-               end
-            end
+         local FlatList in
             FlatList = {List.flatten @data}
             Result = {SumList FlatList}
          end
@@ -169,12 +162,7 @@ class Matrix
       if @data == nil then
          Result = 0
       else
-         local ProductList FlatList in
-            fun {ProductList L}
-               case L of nil then 1
-               [] H|T then H * {ProductList T}
-               end
-            end
+         local FlatList in
             FlatList = {List.flatten @data}
             Result = {ProductList FlatList}
          end
@@ -182,16 +170,18 @@ class Matrix
    end
    
    %% Utility methods
-   %meth display()
+   meth display()
       %% Prints matrix in readable format to standard output
       %%    Any format is valid, just must display all the matrix content
       %% Input: None
       %% Output: None (void)
-      %% Your code here
-   %end
+      for I in 1..@size do
+         {Show {List.nth @data I}}
+      end
+   end
 end
 
-local Matrix1 N R1 R2 R3 R4 R5 R6 R7 R8 Exc1 Exc2 Exc3 Exc4 Exc5 Exc6 Exc7 Exc8 Exc9 in
+local Matrix1 N R1 R2 R3 R4 R5 R6 R7 R8 R9 Exc1 Exc2 Exc3 Exc4 Exc5 Exc6 Exc7 Exc8 Exc9 in
    Matrix1 = {New Matrix init([[1 2 3] [4 5 6] [7 8 9]])}
    {Matrix1 getSize(N)}
    %{Browse N}
@@ -211,6 +201,8 @@ local Matrix1 N R1 R2 R3 R4 R5 R6 R7 R8 Exc1 Exc2 Exc3 Exc4 Exc5 Exc6 Exc7 Exc8 
    {Browse R7}
    {Matrix1 sumAll(R8)} % R8 = 45
    {Browse R8}
+   {Matrix1 productAll(R9)} % R9 = 362880 --> 9!
+   {Browse R9}
    %% Exceptions. All cases return 142857
    {Matrix1 getElement(4 2 Exc1)} % Row index out of range
    {Browse Exc1}
@@ -224,4 +216,6 @@ local Matrix1 N R1 R2 R3 R4 R5 R6 R7 R8 Exc1 Exc2 Exc3 Exc4 Exc5 Exc6 Exc7 Exc8 
    {Browse Exc5}
    {Matrix1 productRow(100 Exc6)} % Row index out of range
    {Browse Exc6}
+
+   {Matrix1 display()} % Displays the matrix
 end
