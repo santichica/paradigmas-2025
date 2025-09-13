@@ -412,7 +412,7 @@ end
 
 %% ============================================================================
 {System.showInfo "Mastermind Game test cases"}
-local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult1 RemainingRounds1 Bool1 in
+local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult1 RemainingRounds1 Bool1 FinishGame in
    CodeMaker1 = {New CodeMaker init()}
    CodeBreaker1 = {New CodeBreaker init(smart)}
    MastermindGame1 = {New MastermindGame init(CodeMaker1 CodeBreaker1)}
@@ -441,4 +441,27 @@ local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult
    %% Get remaining rounds
    {MastermindGame1 getRemainingRounds(RemainingRounds1)}
    {System.showInfo "Rondas restantes: " # RemainingRounds1} % should be 10
+
+   %% Repeat playing rounds until game ends
+   FinishGame = {NewCell false}
+   for I in 1..10 do
+      if @FinishGame == false then
+         local RoundResultForLoop CurrentRoundForLoop RemainingRoundsForLoop in
+            {MastermindGame1 playRound(RoundResultForLoop)}
+            {System.show RoundResultForLoop}
+            {MastermindGame1 getGameStatus(GameStatus1)}
+            {System.showInfo "Status: " # GameStatus1}
+            if GameStatus1 == won orelse GameStatus1 == lost then
+               {System.showInfo "----- Juego terminado -----"}
+               FinishGame := true
+            end
+            {MastermindGame1 getCurrentRound(CurrentRoundForLoop)}
+            {System.showInfo "Ronda actual: " # CurrentRoundForLoop}
+            {MastermindGame1 getRemainingRounds(RemainingRoundsForLoop)}
+            {System.showInfo "Rondas restantes: " # RemainingRoundsForLoop}
+         end
+      else
+         {System.showInfo "----- Juego terminado -----"}
+      end
+   end
 end
