@@ -16,8 +16,11 @@ class MastermindGame
       %%        CodebreakerObj :: CodeBreaker - Object implementing codebreaker behavior
       %% Side effects: Initializes game state, sets maxRounds to 12
       %% Postcondition: Game ready to start, gameStatus = 'ready'
-      %% Your code here
-      skip 
+      codemaker := CodemakerObj
+      codebreaker := CodebreakerObj
+      currentRound := 0
+      maxRounds := 12
+      gameStatus := ready
    end
    
    meth startGame(?Result)
@@ -27,8 +30,21 @@ class MastermindGame
       %% Side effects: Resets game state, generates new secret code
       %% Precondition: Game must be in 'ready' or 'finished' state
       %% Postcondition: Game in 'playing' state, currentRound = 1
-      %% Your code here
-      skip 
+      if @gameStatus == ready orelse @gameStatus == finished then
+         local CodeGenerated in
+            {@codemaker generateSecretCode(CodeGenerated)}
+            if CodeGenerated then
+               currentRound := 1
+               gameStatus := playing
+               {@codebreaker resetHistory}
+               Result = true
+            else
+               Result = false
+            end
+         end
+      else
+         Result = false
+      end
    end
    
    meth playRound(?Result)
@@ -44,8 +60,33 @@ class MastermindGame
       %%         )
       %% Precondition: Game must be in 'playing' state
       %% Side effects: Increments currentRound, may change gameStatus
-      %% Your code here
-      skip 
+      if @gameStatus == playing then
+         local Guess BoolGuess Feedback IsCorrect GameWon GameOver in
+            {@codebreaker generateRandomGuess(Guess)}
+            {@codebreaker makeGuess(Guess BoolGuess)}
+            {@codemaker evaluateGuess(Guess Feedback)}
+            {@codebreaker receiveFeedback(Guess Feedback)}
+            IsCorrect = Feedback.isCorrect
+            if IsCorrect then
+               gameStatus := won
+               GameWon = true
+               GameOver = true
+            elseif @currentRound >= @maxRounds then
+               gameStatus := lost
+               GameWon = false
+               GameOver = true
+            else
+               
+               GameWon = false
+               GameOver = false
+            end
+            Result = result(guess: Guess feedback: Feedback.clueList 
+                                 roundNumber: @currentRound gameWon: GameWon gameOver: GameOver)
+            currentRound := @currentRound + 1
+         end
+      else
+         Result = result(guess: nil feedback: nil roundNumber: @currentRound gameWon: false gameOver: false)
+      end
    end
    
    meth getGameStatus(?Result)
@@ -53,24 +94,21 @@ class MastermindGame
       %% Input: None
       %% Output: Result :: GameStatus - Current status of the game
       %%         GameStatus :: 'ready' | 'playing' | 'won' | 'lost' | 'finished'
-      %% Your code here
-      skip 
+      Result = @gameStatus
    end
    
    meth getCurrentRound(?Result)
       %% Returns current round number
       %% Input: None
       %% Output: Result :: Int - Current round number (1-12)
-      %% Your code here
-      skip 
+      Result = @currentRound
    end
    
    meth getRemainingRounds(?Result)
       %% Returns number of rounds left
       %% Input: None
       %% Output: Result :: Int - Number of rounds remaining (0-11)
-      %% Your code here
-      skip 
+      Result = @maxRounds - @currentRound
    end
    
 end
@@ -143,33 +181,32 @@ class CodeMaker
       %%            ClueList: [FeedbackClue]   % List of individual Clue results
       %%         )
       %%         FeedbackClue :: black | white | none
-      local BCounter WCounter SizeCode CopySecretCode ArraySecretCode CellGuess FeedbackResult 
+      local BCounter WCounter SizeCode ClueList
       in
          {NewCell 0 BCounter}
          {NewCell 0 WCounter}
-         
-         {self getSecretCode(CopySecretCode)}
-         SizeCode = {List.length CopySecretCode}
-         {Array.new 1 SizeCode 0 ArraySecretCode}
+         ClueList = {NewCell nil}
+         if @secretCode == nil then
+            Result = feedback(blackClues:0 whiteClues:0 totalCorrect:0 isCorrect:false clueList:nil)
+         else
+            SizeCode = {List.length @secretCode}
 
-         for I in 1..SizeCode do
-            if {List.nth CopySecretCode I}=={List.nth Guess I} then
-               {Array.put ArraySecretCode I black}
-               BCounter := @BCounter + 1
-            elseif {List.member {List.nth Guess I} CopySecretCode} then
-               {Array.put ArraySecretCode I white}
-               WCounter := @WCounter + 1
-            else
-               {Array.put ArraySecretCode I none}
+            for I in 1..SizeCode do
+               if {List.nth @secretCode I}=={List.nth Guess I} then
+                  ClueList := {List.append @ClueList [black]}
+                  BCounter := @BCounter + 1
+               elseif {List.member {List.nth Guess I} @secretCode} then
+                  ClueList := {List.append @ClueList [white]}
+                  WCounter := @WCounter + 1
+               else
+                  ClueList := {List.append @ClueList [none]}
+               end
             end
+
+            Result = feedback(blackClues:@BCounter whiteClues:@WCounter 
+                                    totalCorrect:(@BCounter+@WCounter) isCorrect:false
+                                    clueList:@ClueList)
          end
-
-
-         FeedbackResult = feedback(blackClues:@BCounter whiteClues:@WCounter 
-                                   totalCorrect:(@BCounter+@WCounter) isCorrect:false
-                                   clueList:{Array.toRecord feedbackClue ArraySecretCode} 
-                                   temp: CopySecretCode) %%%%% BORRAR TEMP
-         Result = FeedbackResult
       end
    end
    
@@ -178,11 +215,7 @@ class CodeMaker
       %% Input: None
       %% Output: Result :: [Color] | nil - Secret code or nil if not set
       %% Note: Should only be used for testing, breaks game in normal play
-      if @secretCode == nil then
-         Result = nil
-      else
-         Result = @secretCode
-      end
+      Result = @secretCode
    end
    
    meth getAvailableColors(?Result)
@@ -205,6 +238,18 @@ class CodeMaker
    end
 end
 
+% TODO
+%%%%%%%%%%%%%% Borrar test case %%%%%%%%%%%%%%
+%local CodeMaker1 SecretCode1 Bool1 Feedback in
+%   CodeMaker1 = {New CodeMaker init()}
+%   {CodeMaker1 generateSecretCode(Bool1)}
+%   {CodeMaker1 getSecretCode(SecretCode1)}
+%   {Browse SecretCode1}
+%   {CodeMaker1 evaluateGuess([red blue green orange] Feedback)}
+%   {Browse Feedback} 
+%end
+
+
 %% ============================================================================
 %% CodeBreaker Class
 %% Handles guess generation and strategy for breaking codes
@@ -219,8 +264,10 @@ declare class CodeBreaker
       %% Side effects: Initializes strategy and available colors
       %% Postcondition: Ready to make guesses
       %% Your code here
-      strategy := @Strategy
-      availableColors
+      availableColors := [red blue green yellow orange purple]
+      strategy := Strategy
+      guessHistory := nil
+      feedbackHistory := nil
    end
       
    meth makeGuess(SuggestedGuess ?Result)  
@@ -229,8 +276,28 @@ declare class CodeBreaker
       %% Output: Result :: Bool - true if guess was accepted and recorded
       %% Note: If SuggestedGuess is invalid, return false
       %% Side effects: Records guess in history
-      %% Your code here
-      skip 
+      local Valid in
+         {self isValidCode(SuggestedGuess Valid)}
+         if Valid then
+            guessHistory := {List.append @guessHistory [SuggestedGuess]}
+            Result = true
+         else
+            Result = false
+         end
+      end
+   end
+
+   meth generateRandomGuess(?Guess)
+      local Colors N G in
+      N = {NewCell ~1}
+      Colors = @availableColors
+      G = {NewCell nil}
+         for I in 1..4 do
+            N := (({OS.rand} mod {List.length Colors}) + 1)
+            G := @G | [{List.nth Colors @N}]
+         end
+         Guess = {List.flatten @G}
+      end
    end
    
    meth receiveFeedback(Guess Feedback)
@@ -240,7 +307,7 @@ declare class CodeBreaker
       %% Side effects: Updates internal state, refines strategy if applicable
       %% Note: Smart strategies use this to eliminate future possibilities
       %% Your code here
-      skip 
+      feedbackHistory := record(guess: Guess feedback: Feedback roundNumber: {Length @feedbackHistory} + 1) | @feedbackHistory 
    end
    
    meth getGuessHistory(?Result)
@@ -253,7 +320,7 @@ declare class CodeBreaker
       %%            roundNumber: Int
       %%         )
       %% Your code here
-      skip 
+      Result = @guessHistory
    end
    
    meth setStrategy(NewStrategy ?Result)
@@ -262,15 +329,23 @@ declare class CodeBreaker
       %% Output: Result :: Bool - true if strategy was changed successfully
       %% Side effects: Updates strategy, may reset internal state
       %% Your code here
-      skip 
+      local Strategies Valid in
+         Strategies = [random systematic smart human]
+         Valid = {List.member NewStrategy Strategies}
+         if Valid then
+            strategy := NewStrategy
+            Result = true
+         else
+            Result = false
+         end
+      end
    end
    
    meth getStrategy(?Result)
       %% Returns current guessing strategy
       %% Input: None
       %% Output: Result :: GuessingStrategy - Current strategy being used
-      %% Your code here
-      skip 
+      Result = @strategy
    end
    
    meth resetHistory()
@@ -278,8 +353,8 @@ declare class CodeBreaker
       %% Input: None
       %% Output: None (void)
       %% Side effects: Clears guessHistory and feedbackHistory
-      %% Your code here
-      skip 
+      guessHistory := nil
+      feedbackHistory := nil
    end
    
    meth getRemainingPossibilities(?Result)
@@ -287,8 +362,83 @@ declare class CodeBreaker
       %% Input: None
       %% Output: Result :: Int | nil - Number of possibilities or nil if not applicable
       %% Note: Only meaningful for 'smart' strategy, returns nil for others
-      %% Your code here
-      skip 
+      local Possibilities in
+         if @strategy == smart then
+            %% Por defecto, todas las combinaciones posibles (6 colores, 4 posiciones, repeticiones permitidas)
+            Possibilities = {Pow {Length @availableColors} 4}
+            %% Si tienes un historial y lógica de descarte, aquí puedes reducir Possibilities
+            Result = Possibilities
+         else
+            Result = nil
+         end
+      end
+   end
+
+   
+   meth isValidCode(Code ?Result)
+      local Colors ValidLength ValidColors in
+         Colors = @availableColors
+         ValidLength = ({List.length Code} == 4)
+         ValidColors = true
+         for I in 1..{List.length Code} do
+            if ({List.member {List.nth Code I} Colors}) == false then
+               ValidColors = false
+            end
+         end
+         Result = ValidLength andthen ValidColors
+      end
    end
 end
 
+% TODO
+%% Create test cases for CodeBreaker
+%%%%%%%%%%%%%% Borrar test case %%%%%%%%%%%%%%
+
+
+%local CodeBreaker1 Bool1 Bool2 GuessHistory RemainingPossibilities GuessHistory2 in
+%   CodeBreaker1 = {New CodeBreaker init(smart)}
+%   {CodeBreaker1 makeGuess([red red blue blue] Bool1)}
+%   {Browse Bool1} % should be true
+%   {CodeBreaker1 makeGuess([red red blue] Bool2)}
+%   {Browse Bool2} % should be false (invalid guess)
+%   {CodeBreaker1 getGuessHistory(GuessHistory)}
+%   {Browse GuessHistory} % should show one valid guess in history
+%   {CodeBreaker1 getRemainingPossibilities(RemainingPossibilities)}
+%   {Browse RemainingPossibilities} % should show 1296 (6^4)
+%   {CodeBreaker1 resetHistory()}
+%   {CodeBreaker1 getGuessHistory(GuessHistory2)}
+%   {Browse GuessHistory2} % should be empty list
+%end
+
+%% ============================================================================
+{System.showInfo "Mastermind Game test cases"}
+local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult1 RemainingRounds1 Bool1 in
+   CodeMaker1 = {New CodeMaker init()}
+   CodeBreaker1 = {New CodeBreaker init(smart)}
+   MastermindGame1 = {New MastermindGame init(CodeMaker1 CodeBreaker1)}
+   Bool1 = {NewCell false}
+   %% Start a new game
+   {MastermindGame1 startGame(StartGame1)}
+   {MastermindGame1 getGameStatus(GameStatus1)}
+   {System.showInfo "----- Juego iniciado -----"} % should be true
+   {System.showInfo "Status: " # GameStatus1} % should be 'playing'
+   local CurrentRound in
+      {MastermindGame1 getCurrentRound(CurrentRound)}
+      {System.showInfo "Inicia en ronda: " # CurrentRound} % should be 1
+   end
+
+
+   %% Play a round
+   {MastermindGame1 playRound(RoundResult1)}
+   {System.show RoundResult1} % should show guess and feedback
+
+   %% Get current round
+   local CurrentRound in
+      {MastermindGame1 getCurrentRound(CurrentRound)}
+      {System.showInfo "Ronda actual: " # CurrentRound} % should be 2
+   end
+
+   %% Get remaining rounds
+   {MastermindGame1 getRemainingRounds(RemainingRounds1)}
+   {System.showInfo "Rondas restantes: " # RemainingRounds1} % should be 10
+end
