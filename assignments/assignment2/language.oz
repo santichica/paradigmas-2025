@@ -190,9 +190,10 @@ end
 
 % Example usage each class:
 
-local N1 N2 N17 N49 N100 N289 N343 N440 N999 N1000 Sum1 EvalSum1 Diff1 EvalDiff1 Mult1 EvalMult1 Mod1 EvalMod1 in
+local N0 N1 N2 N17 N49 N100 N289 N343 N440 N999 N1000 Sum1 EvalSum1 Diff1 EvalDiff1 Mult1 EvalMult1 Mod1 EvalMod1 in
   % Num
   {System.showInfo "Test Num print"}
+  N0 = {New Num init(0)}
   N1 = {New Num init(10)}
   N2 = {New Num init(7)}
 
@@ -208,6 +209,7 @@ local N1 N2 N17 N49 N100 N289 N343 N440 N999 N1000 Sum1 EvalSum1 Diff1 EvalDiff1
   {N2 print} % prints 7
 
   {System.showInfo "\nTest Num toString"}
+  {N0 toString} % prints zero
   {N1 toString} % prints ten
   {N2 toString} % prints seven
   {N17 toString} % prints seventeen - unique case
