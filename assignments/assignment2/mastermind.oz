@@ -411,6 +411,7 @@ end
 %end
 
 %% ============================================================================
+{System.showInfo "Strategy: random"}
 {System.showInfo "Mastermind Game test cases"}
 local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult1 RemainingRounds1 Bool1 FinishGame in
    CodeMaker1 = {New CodeMaker init()}
