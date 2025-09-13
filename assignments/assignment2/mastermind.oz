@@ -61,8 +61,13 @@ class MastermindGame
       %% Precondition: Game must be in 'playing' state
       %% Side effects: Increments currentRound, may change gameStatus
       if @gameStatus == playing then
-         local Guess BoolGuess Feedback IsCorrect GameWon GameOver in
-            {@codebreaker generateRandomGuess(Guess)}
+         local Guess BoolGuess Feedback IsCorrect GameWon GameOver Strategy in
+            {@codebreaker getStrategy(Strategy)}
+            if Strategy == human then
+               {@codebreaker generateHumanGuess(Guess)}
+            else
+               {@codebreaker generateRandomGuess(Guess)}
+            end
             {@codebreaker makeGuess(Guess BoolGuess)}
             {@codemaker evaluateGuess(Guess Feedback)}
             {@codebreaker receiveFeedback(Guess Feedback)}
@@ -181,7 +186,7 @@ class CodeMaker
       %%            ClueList: [FeedbackClue]   % List of individual Clue results
       %%         )
       %%         FeedbackClue :: black | white | none
-      local BCounter WCounter SizeCode ClueList
+      local BCounter WCounter SizeCode ClueList IsCorrect
       in
          {NewCell 0 BCounter}
          {NewCell 0 WCounter}
@@ -202,9 +207,9 @@ class CodeMaker
                   ClueList := {List.append @ClueList [none]}
                end
             end
-
+            IsCorrect = (@secretCode == Guess)
             Result = feedback(blackClues:@BCounter whiteClues:@WCounter 
-                                    totalCorrect:(@BCounter+@WCounter) isCorrect:false
+                                    totalCorrect:(@BCounter+@WCounter) isCorrect:IsCorrect
                                     clueList:@ClueList)
          end
       end
@@ -238,16 +243,6 @@ class CodeMaker
    end
 end
 
-% TODO
-%%%%%%%%%%%%%% Borrar test case %%%%%%%%%%%%%%
-%local CodeMaker1 SecretCode1 Bool1 Feedback in
-%   CodeMaker1 = {New CodeMaker init()}
-%   {CodeMaker1 generateSecretCode(Bool1)}
-%   {CodeMaker1 getSecretCode(SecretCode1)}
-%   {Browse SecretCode1}
-%   {CodeMaker1 evaluateGuess([red blue green orange] Feedback)}
-%   {Browse Feedback} 
-%end
 
 
 %% ============================================================================
@@ -255,7 +250,7 @@ end
 %% Handles guess generation and strategy for breaking codes
 %% ============================================================================  
 declare class CodeBreaker
-   attr guessHistory feedbackHistory strategy availableColors
+   attr guessHistory feedbackHistory strategy availableColors nextHumanGuess
    
    meth init(Strategy)
       %% Initialize codebreaker with a specific strategy
@@ -268,6 +263,7 @@ declare class CodeBreaker
       strategy := Strategy
       guessHistory := nil
       feedbackHistory := nil
+      nextHumanGuess := nil
    end
       
    meth makeGuess(SuggestedGuess ?Result)  
@@ -297,6 +293,30 @@ declare class CodeBreaker
             G := @G | [{List.nth Colors @N}]
          end
          Guess = {List.flatten @G}
+      end
+   end
+
+   meth setNextHumanGuess(Guess)
+      %% Sets the next guess for human strategy
+      %% Input: Guess :: [Color] - The guess to be used next
+      %% Side effects: Updates internal state to use this guess next
+      %% Note: Only applicable if strategy is 'human'
+      nextHumanGuess := Guess
+   end
+
+   meth generateHumanGuess(?Guess)
+      %% Generates the next guess for human strategy
+      %% Input: None
+      %% Output: Guess :: [Color] - The guess to be made
+      %% Note: Uses the guess set by setNextHumanGuess, or defaults if none set
+      local Valid in
+         {self isValidCode(@nextHumanGuess Valid)}
+         if Valid then
+            Guess = @nextHumanGuess
+            nextHumanGuess := nil
+         else
+            Guess = [red red red red] % Default guess if none set or invalid
+         end
       end
    end
    
@@ -390,34 +410,14 @@ declare class CodeBreaker
    end
 end
 
-% TODO
-%% Create test cases for CodeBreaker
-%%%%%%%%%%%%%% Borrar test case %%%%%%%%%%%%%%
-
-
-%local CodeBreaker1 Bool1 Bool2 GuessHistory RemainingPossibilities GuessHistory2 in
-%   CodeBreaker1 = {New CodeBreaker init(smart)}
-%   {CodeBreaker1 makeGuess([red red blue blue] Bool1)}
-%   {Browse Bool1} % should be true
-%   {CodeBreaker1 makeGuess([red red blue] Bool2)}
-%   {Browse Bool2} % should be false (invalid guess)
-%   {CodeBreaker1 getGuessHistory(GuessHistory)}
-%   {Browse GuessHistory} % should show one valid guess in history
-%   {CodeBreaker1 getRemainingPossibilities(RemainingPossibilities)}
-%   {Browse RemainingPossibilities} % should show 1296 (6^4)
-%   {CodeBreaker1 resetHistory()}
-%   {CodeBreaker1 getGuessHistory(GuessHistory2)}
-%   {Browse GuessHistory2} % should be empty list
-%end
 
 %% ============================================================================
 {System.showInfo "Strategy: random"}
-{System.showInfo "Mastermind Game test cases"}
-local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult1 RemainingRounds1 Bool1 FinishGame in
+{System.showInfo "Mastermind Game test cases with random codebreaker"}
+local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult1 RemainingRounds1 FinishGame in
    CodeMaker1 = {New CodeMaker init()}
-   CodeBreaker1 = {New CodeBreaker init(smart)}
+   CodeBreaker1 = {New CodeBreaker init(random)}
    MastermindGame1 = {New MastermindGame init(CodeMaker1 CodeBreaker1)}
-   Bool1 = {NewCell false}
    %% Start a new game
    {MastermindGame1 startGame(StartGame1)}
    {MastermindGame1 getGameStatus(GameStatus1)}
@@ -449,6 +449,7 @@ local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult
       if @FinishGame == false then
          local RoundResultForLoop CurrentRoundForLoop RemainingRoundsForLoop in
             {MastermindGame1 playRound(RoundResultForLoop)}
+            {System.showInfo "Resultado de la ronda: "}
             {System.show RoundResultForLoop}
             {MastermindGame1 getGameStatus(GameStatus1)}
             {System.showInfo "Status: " # GameStatus1}
@@ -465,4 +466,55 @@ local MastermindGame1 CodeMaker1 CodeBreaker1 StartGame1 GameStatus1 RoundResult
          {System.showInfo "----- Juego terminado -----"}
       end
    end
+   {System.showInfo "----- Juego terminado -----"}
+end
+
+%% ============================================================================
+{System.showInfo "Strategy: human"}
+{System.showInfo "Mastermind Game test cases with human codebreaker"}
+%% Run from here to initiate a new game session
+declare
+CodeMaker2 CodeBreaker2 MastermindGame2 StartGame2 GameStatus2 FinishGame
+CodeMaker2 = {New CodeMaker init()}
+CodeBreaker2 = {New CodeBreaker init(human)}
+MastermindGame2 = {New MastermindGame init(CodeMaker2 CodeBreaker2)}
+{MastermindGame2 startGame(StartGame2)}
+{MastermindGame2 getGameStatus(GameStatus2)}
+{System.showInfo "----- Juego iniciado -----"}
+{System.showInfo "Status: " # GameStatus2}
+FinishGame = {NewCell false}
+
+%% Round Iterator: Play rounds by replacing INPUT with desired guesses check the System info for more info
+% Always run the local scope below (from line 499 to line 523), after replacing INPUT with your guesses
+local INPUT RoundResult1 Feedback1 GameStatus1 CurrentRound1 RemainingRounds1 in
+   if @FinishGame == false then
+      INPUT = [green green orange yellow] % Replace this with your guess
+      {System.showInfo "Iniciando ronda con entrada: "}
+      {System.show INPUT}
+      {CodeBreaker2 setNextHumanGuess(INPUT)}
+      {MastermindGame2 playRound(RoundResult1)}
+      {System.showInfo "Resultado de la ronda :"}
+      {System.show RoundResult1}
+      Feedback1 = RoundResult1.feedback
+      {System.showInfo "Feedback ronda : " }
+      {System.show Feedback1}
+      {MastermindGame2 getGameStatus(GameStatus1)}
+      if GameStatus1 == won orelse GameStatus1 == lost then
+         {System.showInfo "Status: " # GameStatus1}
+         {System.showInfo "----- Juego terminado -----"}
+         FinishGame := true
+      end
+      if GameStatus1 == playing then
+         {System.showInfo "Status: " # GameStatus1}
+         {MastermindGame2 getCurrentRound(CurrentRound1)}
+         {MastermindGame2 getRemainingRounds(RemainingRounds1)}
+         {System.showInfo "Ronda actual: " # CurrentRound1}
+         {System.showInfo "Rondas restantes: " # RemainingRounds1}
+      end
+   else
+      {System.showInfo "----- Juego terminado -----"}
+   end
+
+   
+   if GameStatus1 == won orelse GameStatus1 == lost then FinishGame := true end
 end
