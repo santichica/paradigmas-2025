@@ -1,8 +1,5 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Faltan test cases nil
 declare
-
 % Define aux functions
-
 fun {SumList L}
     case L of nil then 0
     [] H|T then H + {SumList T}
