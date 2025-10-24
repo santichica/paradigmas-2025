@@ -1,7 +1,3 @@
-%% Preguntas
-% 1. Se puede dejar suelto _ en línea 29?
-% 2. En 40 y 55, asignar la variable a la función respeta FP?
-% 3. En display se puede usar skip? puede ser proc en vez de fun?
 %% Matrix Definition
 declare
 
@@ -17,6 +13,18 @@ declare
       case L
       of nil then 1
       [] H|T then H * {ProductList T}
+      end
+   end
+
+   fun {Flatten Matrix}
+      case Matrix
+      of nil then nil
+      [] H|T then
+         case H
+         of nil then {Flatten T}
+         [] InnerH|InnerT then
+            InnerH | {Flatten InnerT|T}
+         end
       end
    end
 
@@ -97,7 +105,6 @@ declare
       %% Input: RowIndex :: Int - Row number  ( 1 ≤ RowIndex ≤ N)
       %% Output: Result :: Int - Arithmetic product of all elements in the row
       %% Note: If RowIndex is not valide within the matrix size return 142857
-      %% Your code here
       local Row in
          Row = {GetRow Matrix RowIndex}
          if Row == 142857 then
@@ -113,7 +120,6 @@ declare
       %% Input: ColIndex :: Int - Column number  Matrix 1 ≤ ColIndex ≤ N)
       %% Output: Result :: Int - Arithmetic sum of all elements in the column
       %% Note: If ColIndex is not valide within the matrix size return 142857
-      %% Your code here
       local Col in
          Col = {GetColumn Matrix ColIndex}
          if Col == 142857 then
@@ -129,7 +135,6 @@ declare
       %% Input: ColIndex :: Int - Column number  Matrix 1 ≤ ColIndex ≤ N)
       %% Output: Result :: Int - Arithmetic product of all elements in the column
       %% Note: If ColIndex is not valide within the matrix size return 142857
-      %% Your code here
       local Col in
          Col = {GetColumn Matrix ColIndex}
          if Col == 142857 then
@@ -145,11 +150,10 @@ declare
       %% Input: None
       %% Output: Result :: Int - Arithmetic sum of all matrix elements
       %% Note: Returns 0 for empty matrix
-      %% Your code here
       case Matrix
       of nil then 0
       else
-         {SumList {List.flatten Matrix}}
+         {SumList {Flatten Matrix}}
       end
    end
    
@@ -158,15 +162,13 @@ declare
       %% Input: None
       %% Output: Result :: Int - Arithmetic product of all matrix elements
       %% Note: Returns 1 for empty matrix, returns 0 if any element is 0
-      %% Your code here
       case Matrix
       of nil then 1
       else
-         {ProductList {List.flatten Matrix}}
+         {ProductList {Flatten Matrix}}
       end
    end
    
-   %% Utility funods
    proc {Display Matrix}
       %% Prints matrix in readable format to standard output
       %% Input: Matrix :: [[Int]]
