@@ -447,12 +447,20 @@ fun {IsRedex Node Env}
          
          case Op
          of leaf(value:OpName) then
-            % Verificar si es una primitiva
-            if {IsPrimitive {Atom.toString OpName}} then
-               % Primitiva: necesita 2 argumentos que sean valores numéricos
-               {Length Args} == 2 andthen {AllValues Args}
-            % Las funciones definidas NO son redex, se instancian primero
+            % Verificar si es un átomo (primitiva) o un número
+            if {IsAtom OpName} then
+               % Verificar si es una primitiva o 'var'
+               if {IsPrimitive {Atom.toString OpName}} then
+                  % Primitiva: necesita 2 argumentos que sean valores numéricos
+                  {Length Args} == 2 andthen {AllValues Args}
+               elseif OpName == 'var' then
+                  % 'var' siempre se puede reducir si tiene 2 argumentos
+                  {Length Args} == 2
+               else
+                  false
+               end
             else
+               % No es un átomo (es un número o nil), no es reducible
                false
             end
          else
@@ -531,28 +539,31 @@ end
 %end
 
 %% ============================================
-%% TASK 3: Evaluate
+%% TASK 3: Reduce
 %% ============================================
 
-% Evalúa una expresión hasta que no haya más reducciones posibles
-fun {Evaluate Graph Env}
+% Aplica una única reducción al grafo
+% Retorna: reduced(graph: Graph) si se pudo reducir
+%          unreducible si no hay más reducciones
+fun {Reduce Graph}
    local Next in
-      Next = {NextReduction Graph Env}
+      Next = {NextReduction Graph Graph.env}
       case Next
       of none then
-         % No hay más reducciones, retornar el resultado
-         Graph.mainExpr
+         unreducible
       [] redex(node:Node path:Path) then
-         % Reducir primitiva
+         % Aplicar reducción de primitiva
          local NewExpr in
             NewExpr = {ReduceRedex Node}
-            {Evaluate result(env:Env mainExpr:{ReplaceNode Graph.mainExpr Path NewExpr}) Env}
+            reduced(graph: result(env: Graph.env 
+                                   mainExpr: {ReplaceNode Graph.mainExpr Path NewExpr}))
          end
       [] instantiate(node:Node path:Path) then
-         % Instanciar función
+         % Aplicar instanciación de función
          local NewExpr in
-            NewExpr = {InstantiateFunction Node Env}
-            {Evaluate result(env:Env mainExpr:{ReplaceNode Graph.mainExpr Path NewExpr}) Env}
+            NewExpr = {InstantiateFunction Node Graph.env}
+            reduced(graph: result(env: Graph.env 
+                                   mainExpr: {ReplaceNode Graph.mainExpr Path NewExpr}))
          end
       end
    end
@@ -567,17 +578,43 @@ fun {ReduceRedex Node}
       
       case Op
       of leaf(value:OpName) then
-         case Arg1#Arg2
-         of leaf(value:V1)#leaf(value:V2) then
-            case OpName
-            of '+' then leaf(value: V1 + V2)
-            [] '-' then leaf(value: V1 - V2)
-            [] '*' then leaf(value: V1 * V2)
-            [] '/' then leaf(value: V1 div V2)
-            else leaf(value:error)
+         case OpName
+         of 'var' then
+            % var VarName VarValue -> crea sustitución local
+            % Arg1 es el nombre de la variable (como leaf(value:y))
+            % Arg2 es el cuerpo donde se usa la variable
+            % VarValue es el primer argumento que se debe sustituir
+            case Arg1
+            of leaf(value:VarName) then
+               % Obtener el valor de la variable (Arg2 es app(left:VarExpr right:BodyExpr))
+               case Arg2
+               of app(left:VarValue right:BodyExpr) then
+                  % Sustituir VarName por VarValue en BodyExpr
+                  local SubstDict in
+                     SubstDict = {Dictionary.new}
+                     {Dictionary.put SubstDict VarName VarValue}
+                     {SubstituteInNode BodyExpr SubstDict}
+                  end
+               else
+                  Arg2
+               end
+            else
+               Arg2
             end
          else
-            leaf(value:error)
+            % Primitiva normal
+            case Arg1#Arg2
+            of leaf(value:V1)#leaf(value:V2) then
+               case OpName
+               of '+' then leaf(value: V1 + V2)
+               [] '-' then leaf(value: V1 - V2)
+               [] '*' then leaf(value: V1 * V2)
+               [] '/' then leaf(value: V1 div V2)
+               else leaf(value:error)
+               end
+            else
+               leaf(value:error)
+            end
          end
       else
          leaf(value:error)
@@ -667,57 +704,147 @@ fun {ExtractValue Node}
    end
 end
 
-% Pruebas simplificadas que muestran solo valores
-{System.showInfo "=== TASK 3: Evaluate ==="}
+%% ============================================
+%% TASK 4: Evaluate
+%% ============================================
+
+% Evalúa una expresión hasta que no haya más reducciones posibles
+% Usa Reduce repetidamente
+fun {Evaluate Graph}
+   local ReductionResult in
+      ReductionResult = {Reduce Graph}
+      case ReductionResult
+      of unreducible then
+         % No hay más reducciones, retornar el resultado
+         Graph.mainExpr
+      [] reduced(graph:NewGraph) then
+         % Aplicar Reduce nuevamente recursivamente
+         {Evaluate NewGraph}
+      end
+   end
+end
+
+%% ============================================
+%% TESTS
+%% ============================================
+
+{System.showInfo "===================================="}
+{System.showInfo "PRUEBAS DEL PROYECTO"}
+{System.showInfo "===================================="}
 {System.showInfo ""}
 
-{System.showInfo "Test 1: * 3 4"}
-local R Result in
-   R = {GraphGeneration "* 3 4"}
-   Result = {Evaluate R R.env}
-   case Result
-   of leaf(value:V) then
-      {System.showInfo "Resultado: "#{Int.toString V}}
+% Test 1: GraphGeneration
+{System.showInfo "TEST 1: GraphGeneration"}
+{System.showInfo "Program: * 3 4"}
+local G1 in
+   G1 = {GraphGeneration "* 3 4"}
+   {System.showInfo "✓ Grafo generado exitosamente"}
+end
+{System.showInfo ""}
+
+% Test 2: NextReduction
+{System.showInfo "TEST 2: NextReduction"}
+{System.showInfo "Program: * 3 4"}
+local G2 Next2 in
+   G2 = {GraphGeneration "* 3 4"}
+   Next2 = {NextReduction G2 G2.env}
+   case Next2
+   of redex(node:_ path:_) then
+      {System.showInfo "✓ Redex encontrado: primitiva * con argumentos 3 y 4"}
    else
-      {System.showInfo "Error: no se pudo evaluar"}
+      {System.showInfo "✗ Error: no se encontró redex"}
+   end
+end
+{System.showInfo ""}
+
+% Test 3: Reduce (una sola reducción)
+{System.showInfo "TEST 3: Reduce (una reducción)"}
+{System.showInfo "Program: * 3 4"}
+local G3 R3 in
+   G3 = {GraphGeneration "* 3 4"}
+   R3 = {Reduce G3}
+   case R3
+   of reduced(graph:NewG) then
+      case NewG.mainExpr
+      of leaf(value:V) then
+         {System.showInfo "✓ Reducción aplicada: resultado = "#{Int.toString V}}
+      else
+         {System.showInfo "✗ Error en reducción"}
+      end
+   else
+      {System.showInfo "✗ No se pudo reducir"}
+   end
+end
+{System.showInfo ""}
+
+% Test 4: Evaluate (evaluación completa usando Reduce)
+{System.showInfo "TEST 4: Evaluate (evaluación completa)"}
+{System.showInfo ""}
+
+{System.showInfo "Test 4.1: * 3 4"}
+local R4_1 in
+   R4_1 = {Evaluate {GraphGeneration "* 3 4"}}
+   case R4_1
+   of leaf(value:V) then
+      if V == 12 then
+         {System.showInfo "✓ Resultado correcto: "#{Int.toString V}}
+      else
+         {System.showInfo "✗ Resultado incorrecto. Esperado: 12, Obtenido: "#{Int.toString V}}
+      end
+   else
+      {System.showInfo "✗ Error en evaluación"}
    end
 end
 
 {System.showInfo ""}
-{System.showInfo "Test 2: square 3"}
-local R Result in
-   R = {GraphGeneration "fun square x = * x x square 3"}
-   Result = {Evaluate R R.env}
-   case Result
+{System.showInfo "Test 4.2: square 3 (fun square x = * x x)"}
+local R4_2 in
+   R4_2 = {Evaluate {GraphGeneration "fun square x = * x x square 3"}}
+   case R4_2
    of leaf(value:V) then
-      {System.showInfo "Resultado: "#{Int.toString V}}
+      if V == 9 then
+         {System.showInfo "✓ Resultado correcto: "#{Int.toString V}}
+      else
+         {System.showInfo "✗ Resultado incorrecto. Esperado: 9, Obtenido: "#{Int.toString V}}
+      end
    else
-      {System.showInfo "Error: no se pudo evaluar"}
+      {System.showInfo "✗ Error en evaluación"}
    end
 end
 
 {System.showInfo ""}
-{System.showInfo "Test 3: twice 5"}
-local R Result in
-   R = {GraphGeneration "fun twice x = + x x twice 5"}
-   Result = {Evaluate R R.env}
-   case Result
+{System.showInfo "Test 4.3: twice 5 (fun twice x = + x x)"}
+local R4_3 in
+   R4_3 = {Evaluate {GraphGeneration "fun twice x = + x x twice 5"}}
+   case R4_3
    of leaf(value:V) then
-      {System.showInfo "Resultado: "#{Int.toString V}}
+      if V == 10 then
+         {System.showInfo "✓ Resultado correcto: "#{Int.toString V}}
+      else
+         {System.showInfo "✗ Resultado incorrecto. Esperado: 10, Obtenido: "#{Int.toString V}}
+      end
    else
-      {System.showInfo "Error: no se pudo evaluar"}
+      {System.showInfo "✗ Error en evaluación"}
    end
 end
 
 {System.showInfo ""}
-{System.showInfo "Test 4: fourtimes 2"}
-local R Result in
-   R = {GraphGeneration "fun fourtimes x = var y = * x x in + y y fourtimes 2"}
-   Result = {Evaluate R R.env}
-   case Result
+{System.showInfo "Test 4.4: fourtimes 2 (fun fourtimes x = var y = * x x in + y y)"}
+local R4_4 in
+   R4_4 = {Evaluate {GraphGeneration "fun fourtimes x = var y = * x x in + y y fourtimes 2"}}
+   case R4_4
    of leaf(value:V) then
-      {System.showInfo "Resultado: "#{Int.toString V}}
+      if V == 8 then
+         {System.showInfo "✓ Resultado correcto: "#{Int.toString V}}
+      else
+         {System.showInfo "✗ Resultado incorrecto. Esperado: 8, Obtenido: "#{Int.toString V}}
+      end
    else
-      {System.showInfo "Error: no se pudo evaluar"}
+      {System.showInfo "✗ Error en evaluación"}
    end
 end
+
+{System.showInfo ""}
+{System.showInfo "===================================="}
+{System.showInfo "PRUEBAS COMPLETADAS"}
+{System.showInfo "===================================="}
