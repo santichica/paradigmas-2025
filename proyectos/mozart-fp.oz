@@ -259,9 +259,9 @@ fun {ParseExpression Tokens}
    end
 end
 
-%% Program Parser
+%% GraphGeneration
 
-fun {ParseProgram ProgramString}
+fun {GraphGeneration ProgramString}
    Lines = {String.tokens {VirtualString.toString ProgramString} &\n}
    DefLine = {Tokenize {List.nth Lines 1}}
    CallLine = {Tokenize {List.nth Lines 2}}
@@ -521,17 +521,17 @@ end
 
 local P1 P2 P3 in
    {System.showInfo "TEST 1: square square 3"}
-   P1 = {ParseProgram "fun square x = x * x\nsquare square 3"}
+   P1 = {GraphGeneration "fun square x = x * x\nsquare square 3"}
    {System.show P1}
    {System.showInfo ""}
    
    {System.showInfo "TEST 2: fourtimes with var"}
-   P2 = {ParseProgram "fun fourtimes x = var y = x * x in y + y\nfourtimes 2"}
+   P2 = {GraphGeneration "fun fourtimes x = var y = x * x in y + y\nfourtimes 2"}
    {System.show P2}
    {System.showInfo ""}
    
    {System.showInfo "TEST 3: Multiple parameters"}
-   P3 = {ParseProgram "fun sum_n x y z n = (x + y + z) * n\nsum_n 1 1 1 2"}
+   P3 = {GraphGeneration "fun sum_n x y z n = (x + y + z) * n\nsum_n 1 1 1 2"}
    {System.show P3}
    {System.showInfo ""}
 end
@@ -542,7 +542,7 @@ end
 
 local P1 R1 in
    {System.showInfo "TEST 2.1: square square 3"}
-   P1 = {ParseProgram "fun square x = x * x\nsquare square 3"}
+   P1 = {GraphGeneration "fun square x = x * x\nsquare square 3"}
    R1 = {EvaluateProgram P1}
    
    {System.showInfo "\n→ Final result:"}
@@ -553,7 +553,7 @@ end
 
 local P2 R2 in
    {System.showInfo "TEST 2.2: fourtimes 2"}
-   P2 = {ParseProgram "fun fourtimes x = var y = x * x in y + y\nfourtimes 2"}
+   P2 = {GraphGeneration "fun fourtimes x = var y = x * x in y + y\nfourtimes 2"}
    R2 = {EvaluateProgram P2}
    
    {System.showInfo "\n→ Final result:"}
@@ -564,7 +564,7 @@ end
 
 local P3 R3 in
    {System.showInfo "TEST 2.3: sum_n 1 1 1 2"}
-   P3 = {ParseProgram "fun sum_n x y z n = (x + y + z) * n\nsum_n 1 1 1 2"}
+   P3 = {GraphGeneration "fun sum_n x y z n = (x + y + z) * n\nsum_n 1 1 1 2"}
    R3 = {EvaluateProgram P3}
    
    {System.showInfo "\n→ Final result:"}
@@ -579,7 +579,7 @@ end
 
 local P Result in
    {System.showInfo "TEST 4.1: square 3"}
-   P = {ParseProgram "fun square x = x * x\nsquare 3"}
+   P = {GraphGeneration "fun square x = x * x\nsquare 3"}
    Result = {Evaluate P}
    
    {System.show Result}
@@ -593,7 +593,7 @@ end
 
 local P Result in
    {System.showInfo "TEST 4.2: fourtimes 2"}
-   P = {ParseProgram "fun fourtimes x = var y = x * x in y + y\nfourtimes 2"}
+   P = {GraphGeneration "fun fourtimes x = var y = x * x in y + y\nfourtimes 2"}
    Result = {Evaluate P}
    
    {System.show Result}
@@ -607,7 +607,7 @@ end
 
 local P Result in
    {System.showInfo "TEST 4.3: sum_n 1 1 1 2"}
-   P = {ParseProgram "fun sum_n x y z n = (x + y + z) * n\nsum_n 1 1 1 2"}
+   P = {GraphGeneration "fun sum_n x y z n = (x + y + z) * n\nsum_n 1 1 1 2"}
    Result = {Evaluate P}
    
    {System.show Result}
@@ -621,7 +621,7 @@ end
 
 local P Result in
    {System.showInfo "TEST 4.4: square square 3"}
-   P = {ParseProgram "fun square x = x * x\nsquare square 3"}
+   P = {GraphGeneration "fun square x = x * x\nsquare square 3"}
    Result = {Evaluate P}
    
    {System.show Result}
@@ -635,7 +635,7 @@ end
 
 local P Result in
    {System.showInfo "TEST 4.5: arithmetic 5 6"}
-   P = {ParseProgram "fun arithmetic x y = ((x + y)/ ( x - y))* 2\narithmetic 5 6"}
+   P = {GraphGeneration "fun arithmetic x y = ((x + y)/ ( x - y))* 2\narithmetic 5 6"}
    Result = {Evaluate P}
    
    {System.show Result}
@@ -646,7 +646,7 @@ end
 
 local P Result in
    {System.showInfo "TEST 4.6: var_use 16"}
-   P = {ParseProgram "fun var_use x = var y = x * 2 in var z = y * 2 in z - 3\nvar_use 16"}
+   P = {GraphGeneration "fun var_use x = var y = x * 2 in var z = y * 2 in z - 3\nvar_use 16"}
    Result = {Evaluate P}
    
    {System.show Result}
@@ -660,7 +660,7 @@ end
 
 local P Result in
    {System.showInfo "TEST 4.7: sum_n 1 (partial application)"}
-   P = {ParseProgram "fun sum_n x y z n = (x + y + z) * n\nsum_n 1"}
+   P = {GraphGeneration "fun sum_n x y z n = (x + y + z) * n\nsum_n 1"}
    Result = {Evaluate P}
    
    {System.showInfo "Result (should be partially applied function):"}
@@ -670,7 +670,7 @@ end
 
 local P Result in
    {System.showInfo "TEST 4.8: Free variable"}
-   P = {ParseProgram "fun id x = x\nid freeVar"}
+   P = {GraphGeneration "fun id x = x\nid freeVar"}
    Result = {Evaluate P}
    
    {System.showInfo "Result (should contain free variable):"}
