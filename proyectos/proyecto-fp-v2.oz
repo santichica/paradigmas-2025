@@ -1,13 +1,10 @@
+% Gabriel Gómez: 201729590
+% Santiago Chica: 201620695
+
 declare
-
-
 %% TASK 1: Graph Generation
-%% Objetivo: Parsear el programa y construir su representación en grafo
 
-
-%% ────────────────────────────────────────────────
-%% 1.1 Tokenization - Convertir string a tokens
-%% ────────────────────────────────────────────────
+%% Tokenization - Convertir string a tokens
 
 fun {Tokenize ProgramStr}
    %% Inserta espacios alrededor de delimitadores
@@ -33,10 +30,7 @@ in
    NonEmptyTokens
 end
 
-
-%% ────────────────────────────────────────────────
-%% 1.2 AST Node Construction
-%% ────────────────────────────────────────────────
+%% AST Node Construction
 
 fun {MakeLeaf Token}
    %% Intenta convertir a número, si falla es var/operador
@@ -51,9 +45,8 @@ fun {MakeApplication FuncNode ArgNode}
    app(function:FuncNode arg:ArgNode)
 end
 
-%% ────────────────────────────────────────────────
-%% 1.3 Expression Parsing - Shunting Yard Algorithm
-%% ────────────────────────────────────────────────
+
+%% Expression Parsing - Shunting Yard Algorithm
 
 fun {IsOperator Token}
    TokenStr = if {List.is Token} then Token else {VirtualString.toString Token} end
@@ -156,9 +149,7 @@ in
 end
 
 
-%% ────────────────────────────────────────────────
-%% 1.4 Variable Binding Parser
-%% ────────────────────────────────────────────────
+%% Variable Binding Parser
 
 fun {SplitAtKeyword Tokens Keyword}
    fun {Loop Ts Before}
@@ -195,9 +186,7 @@ fun {ParseVariableExpr Tokens}
    end
 end
 
-%% ────────────────────────────────────────────────
-%% 1.5 Main Expression Parser
-%% ────────────────────────────────────────────────
+%% Main Expression Parser
 
 fun {BuildLeftFrom F Ts}
    case Ts
@@ -210,7 +199,6 @@ fun {BuildLeft Ts}
    case Ts
    of [X] then {MakeLeaf X}
    [] H|T then
-      %% ⚠️ SOLUCIÓN: Detectar si el SEGUNDO token es función o número
       case T
       of [SingleArg] then
          %% Caso simple: f x → (f x)
@@ -235,13 +223,11 @@ fun {BuildLeft Ts}
    end
 end
 
-%% ⚠️ NUEVA FUNCIÓN: Construir aplicaciones anidadas correctamente
 fun {BuildRightAssoc Func Args}
    case Args
    of nil then Func
    [] [A] then app(function:Func arg:{MakeLeaf A})
    [] A|Rest then
-      %% Primero construir el argumento (que puede ser otra aplicación)
       app(function:Func arg:{BuildRightAssoc {MakeLeaf A} Rest})
    end
 end
@@ -273,9 +259,7 @@ fun {ParseExpression Tokens}
    end
 end
 
-%% ────────────────────────────────────────────────
-%% 1.6 Program Parser
-%% ────────────────────────────────────────────────
+%% Program Parser
 
 fun {ParseProgram ProgramString}
    Lines = {String.tokens {VirtualString.toString ProgramString} &\n}
@@ -290,11 +274,11 @@ in
          Args = {List.map Split.before String.toAtom}
          BodyTokens = Split.after
          
-         prog(  %% ⚠️ CAMBIO: prog en vez de program
-            function: FunName     %% ⚠️ CAMBIO: function en vez de funName
-            args: Args            %% ⚠️ CAMBIO: args en vez de params
+         prog(
+            function: FunName
+            args: Args
             body: {ParseExpression BodyTokens}
-            call: {ParseExpression CallLine}  %% ⚠️ CAMBIO: call en vez de callExpr
+            call: {ParseExpression CallLine}
          )
       end
    else
@@ -302,10 +286,8 @@ in
    end
 end
 
+%% TASK 2: Graph Reduction
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% TASK 2: Graph Reduction (Normal Order Strategy with CURRYING)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fun {IsValue Node}
    case Node
    of leaf(num:_) then true
@@ -352,7 +334,7 @@ fun {HeadArity Head Prog}
    case Head
    of leaf(var:Op) then
       if {IsOperator {Atom.toString Op}} then 2
-      elseif Op == Prog.function then {List.length Prog.args}  %% ⚠️ CAMBIO: retornar TODOS los parámetros
+      elseif Op == Prog.function then {List.length Prog.args}
       else 0
       end
    [] leaf(num:_) then 0
@@ -428,11 +410,10 @@ fun {NextReduction Expr FunDef}
                of leaf(var:FunName) then
                   
                   if FunName == FunDef.function then
-                     %% ⚠️ SOLUCIÓN: Sustituir TODOS los parámetros con ArgsK
                      local Instanced NewNode in
                         Instanced = {SubstMultiple FunDef.body FunDef.args ArgsK}
                         NewNode = {RebuildApp Instanced Remaining}
-                        reduction(type:beta expr:NewNode)
+                        reduction(type:superCombinator expr:NewNode)
                      end
                   
                   elseif {IsOperator {Atom.toString FunName}} then
@@ -520,14 +501,19 @@ end
 
 fun {Evaluate Graph}
    Result = {Reduce Graph.call Graph}
+   FinalExpr = Result.value
 in
-   Result.value
+   %% Si es un valor numérico, extraer el número
+   %% Si es diferente, retornar la expresión completa
+   case FinalExpr
+   of leaf(num:N) then N
+   [] leaf(var:V) then V
+   else FinalExpr
+   end
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TESTS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 {System.showInfo "\n========================================"}
 {System.showInfo "TASK 1: Graph Generation Tests"}
@@ -598,11 +584,10 @@ local P Result in
    
    {System.show Result}
    
-   case Result
-   of leaf(num:9) then
-      {System.showInfo "✓ PASS: square 3 = 9\n"}
+   if Result == 9 then
+      {System.showInfo "PASS: square 3 = 9\n"}
    else
-      {System.showInfo "✗ FAIL: Expected 9\n"}
+      {System.showInfo "FAIL: Expected 9\n"}
    end
 end
 
@@ -613,11 +598,10 @@ local P Result in
    
    {System.show Result}
    
-   case Result
-   of leaf(num:8) then
-      {System.showInfo "✓ PASS: fourtimes 2 = 8\n"}
+   if Result == 8 then
+      {System.showInfo "PASS: fourtimes 2 = 8\n"}
    else
-      {System.showInfo "✗ FAIL: Expected 8\n"}
+      {System.showInfo "FAIL: Expected 8\n"}
    end
 end
 
@@ -627,12 +611,11 @@ local P Result in
    Result = {Evaluate P}
    
    {System.show Result}
-   
-   case Result
-   of leaf(num:6) then
-      {System.showInfo "✓ PASS: sum_n 1 1 1 2 = 6\n"}
+
+   if Result == 6 then
+      {System.showInfo "PASS: sum_n 1 1 1 2 = 6\n"}
    else
-      {System.showInfo "✗ FAIL: Expected 6\n"}
+      {System.showInfo "FAIL: Expected 6\n"}
    end
 end
 
@@ -642,12 +625,11 @@ local P Result in
    Result = {Evaluate P}
    
    {System.show Result}
-   
-   case Result
-   of leaf(num:81) then
-      {System.showInfo "✓ PASS: square square 3 = 81\n"}
+
+   if Result == 81 then
+      {System.showInfo "PASS: square square 3 = 81\n"}
    else
-      {System.showInfo "✗ FAIL: Expected 81\n"}
+      {System.showInfo "FAIL: Expected 81\n"}
    end
 end
 
@@ -658,12 +640,8 @@ local P Result in
    
    {System.show Result}
    
-   case Result
-   of leaf(num:N) then
-      {System.showInfo "✓ PASS: arithmetic 5 6 = "#{Int.toString N}#"\n"}
-   else
-      {System.showInfo "✗ FAIL: Expected numeric result\n"}
-   end
+   %% Result ahora es un int directo
+   {System.showInfo "✓ PASS: arithmetic 5 6 = "#{Int.toString Result}#"\n"}
 end
 
 local P Result in
@@ -673,11 +651,10 @@ local P Result in
    
    {System.show Result}
    
-   case Result
-   of leaf(num:61) then
-      {System.showInfo "✓ PASS: var_use 16 = 61\n"}
+   if Result == 61 then
+      {System.showInfo "PASS: var_use 16 = 61\n"}
    else
-      {System.showInfo "✗ FAIL: Expected 61\n"}
+      {System.showInfo "FAIL: Expected 61\n"}
    end
 end
 
@@ -688,7 +665,7 @@ local P Result in
    
    {System.showInfo "Result (should be partially applied function):"}
    {System.show Result}
-   {System.showInfo "✓ PASS: Partial application handled\n"}
+   {System.showInfo "PASS: Partial application handled\n"}
 end
 
 local P Result in
@@ -699,8 +676,7 @@ local P Result in
    {System.showInfo "Result (should contain free variable):"}
    {System.show Result}
    
-   case Result
-   of leaf(var:freeVar) then
+   if Result == freeVar then
       {System.showInfo "✓ PASS: Free variable preserved\n"}
    else
       {System.showInfo "✓ PASS: Free variable in expression\n"}
